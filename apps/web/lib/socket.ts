@@ -8,7 +8,7 @@ import type {
 
 const URL =
   process.env.NEXT_PUBLIC_SERVER_URL ||
-  "https://real-time-coding-server.vercel.app";
+  "https://real-time-coding-f4vt.onrender.com";
 
 let socket: Socket = null as unknown as Socket;
 
