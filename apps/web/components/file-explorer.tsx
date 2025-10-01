@@ -110,7 +110,7 @@ export function FileExplorer({ roomId, onSelectFile }: FileExplorerProps) {
           className={`flex items-center px-2 py-1 text-sm cursor-pointer hover:bg-gray-700 ${
             node.type === "folder" && isExpanded ? "font-medium" : ""
           }`}
-          style={{ paddingLeft: depth * 12 }}
+          style={{ paddingLeft: depth * 2 }}
           onClick={() =>
             node.type === "file" ? onSelectFile(node) : toggleExpand(node.id)
           }
@@ -206,7 +206,7 @@ export function FileExplorer({ roomId, onSelectFile }: FileExplorerProps) {
         </div>
 
         {node.type === "folder" && isExpanded && (
-          <div className="ml-4">
+          <div className="ml-2">
             {node.children?.map((child) => renderNode(child, depth + 1))}
           </div>
         )}
@@ -215,8 +215,8 @@ export function FileExplorer({ roomId, onSelectFile }: FileExplorerProps) {
   };
 
   return (
-    <div className="w-64 bg-[#1e1e1e] text-gray-200 flex flex-col select-none border-r border-[#252526]">
-      <div className="flex justify-between items-center px-2 py-2 border-b border-[#252526]">
+    <div className="w-64 bg-[#1e1e1e] text-gray-200 flex flex-col select-none border-r border-[#434346]">
+      <div className="flex justify-between items-center px-2 py-2 border-b border-[#434346]">
         <span className="font-semibold text-xs uppercase tracking-wide text-gray-400">
           Explorer
         </span>

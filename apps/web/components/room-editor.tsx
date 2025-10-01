@@ -42,6 +42,7 @@ const languageMap: Record<string, string> = {
   scala: "scala",
   m: "objective-c",
   html: "html",
+  json: "json",
 };
 
 export default function EditorPage({
@@ -86,7 +87,7 @@ export default function EditorPage({
       if (prev.find((f) => f.id === file.id)) return prev;
 
       const extension = file.name.split(".").pop()?.toLowerCase() || "txt";
-      const language = languageMap[extension] || "plaintext";
+      const language = languageMap[extension] || "text";
 
       const tab: FileTab = {
         id: file.id,
@@ -127,12 +128,12 @@ export default function EditorPage({
 
     const unsubJoined = onUserJoined(roomId, (user) => {
       if (user.userId === userId) toast.success("You joined the room");
-      else toast.success(`${user.name ?? "Someone"} joined the room`);
+      else toast.success(`${user.name} joined the room`);
     });
 
     const unsubLeft = onUserLeft(roomId, (user) => {
-      if (user.userId === userId) toast.info("You left the room");
-      else toast.info(`${user.name ?? "Someone"} left the room`);
+      if (user.userId === userId) toast("You left the room");
+      else toast(`${user.name} left the room`);
     });
 
     return () => {

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "tsc --watch",
-    "build": "tsc -p"
+    "build": "tsc -p tsconfig.json"
   },
   "exports": {
     ".": {

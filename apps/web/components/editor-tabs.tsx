@@ -23,7 +23,7 @@ export function EditorTabs({
       {files.map((file) => (
         <div
           key={file.id}
-          className={`flex items-center border-r border-[#1e1e1e] px-3 py-2 text-sm cursor-pointer transition-colors
+          className={`flex items-center border-r border-[#434346] px-3 py-2 text-sm cursor-pointer transition-colors
             ${
               activeFileId === file.id
                 ? "bg-[#1e1e1e] text-white"

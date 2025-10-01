@@ -10,7 +10,6 @@ import {
 } from "./ui/tooltip";
 import { useEffect, useState } from "react";
 import { getParticipants, getSocket, leaveRoom } from "@/lib/socket";
-import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
 import { useRouter } from "next/navigation";
@@ -35,7 +34,6 @@ export const Header = ({ roomId }: { roomId: string }) => {
     });
 
     socket.emit("get-participants", { roomId });
-
     return () => unsubscribe();
   }, [roomId, socket]);
 
@@ -59,13 +57,9 @@ export const Header = ({ roomId }: { roomId: string }) => {
   };
 
   return (
-    <header className="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-      <div className="flex items-center space-x-6 w-full">
-        <Link href="/" className="flex items-center space-x-2">
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-            CodeCollab
-          </h1>
-        </Link>
+    <header className="flex items-center justify-between px-4 py-1 bg-[#1e1e1e] border-b border-[#434346] text-gray-200">
+      <div className="flex items-center space-x-4">
+        <h1 className="text-lg font-bold text-white">CodeCollab</h1>
 
         <TooltipProvider>
           <Tooltip>
@@ -73,12 +67,13 @@ export const Header = ({ roomId }: { roomId: string }) => {
               <Button
                 variant="ghost"
                 size="sm"
+                className="px-2 py-1 text-xs hover:bg-[#252526] hover:text-white rounded-md flex items-center"
                 onClick={() => {
                   navigator.clipboard.writeText(roomId);
-                  toast("Room ID copied to clipboard");
+                  toast.success("Room ID copied");
                 }}
               >
-                <Copy size={16} />
+                <Copy size={14} className="mr-1" />
                 {roomId}
               </Button>
             </TooltipTrigger>
@@ -87,7 +82,45 @@ export const Header = ({ roomId }: { roomId: string }) => {
         </TooltipProvider>
       </div>
 
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-3">
+        <div className="flex -space-x-2">
+          <TooltipProvider>
+            {visibleParticipants.map((user) => (
+              <Tooltip key={user.userId}>
+                <TooltipTrigger asChild>
+                  <div className="relative">
+                    <Avatar className="h-7 w-7 border-2 border-[#1e1e1e]">
+                      <AvatarFallback
+                        className={cn(
+                          "text-xs font-medium",
+                          user.userId === currentUserId
+                            ? "bg-green-600 text-white"
+                            : "bg-blue-500 text-white"
+                        )}
+                      >
+                        {user?.name?.charAt(0).toUpperCase() || "?"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span
+                      className={cn(
+                        "absolute bottom-0 right-0 block h-2 w-2 rounded-full border-2 border-[#1e1e1e]",
+                        user.socketId ? "bg-green-500" : "bg-gray-500"
+                      )}
+                    />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>{user.name || "Unknown"}</TooltipContent>
+              </Tooltip>
+            ))}
+
+            {remainingCount > 0 && (
+              <div className="h-7 w-7 flex items-center justify-center rounded-full bg-gray-700 text-xs border-2 border-[#1e1e1e]">
+                +{remainingCount}
+              </div>
+            )}
+          </TooltipProvider>
+        </div>
+
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -96,53 +129,11 @@ export const Header = ({ roomId }: { roomId: string }) => {
               className="rounded-full"
               onClick={handleRoomLeave}
             >
-              <LogOutIcon size={18} />
+              <LogOutIcon size={16} />
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="right">Leave Room</TooltipContent>
+          <TooltipContent side="left">Leave Room</TooltipContent>
         </Tooltip>
-
-        <TooltipProvider>
-          <div className="flex items-center">
-            <div className="flex -space-x-2">
-              {visibleParticipants.map((user) => (
-                <Tooltip key={user.userId}>
-                  <TooltipTrigger asChild>
-                    <div className="relative select-none">
-                      <Avatar className="h-8 w-8 border-2 border-white dark:border-gray-900">
-                        <AvatarFallback
-                          className={cn(
-                            "text-xs font-medium",
-                            user.userId === currentUserId
-                              ? "bg-black text-white"
-                              : "bg-blue-100 text-blue-800"
-                          )}
-                        >
-                          {user?.name?.charAt(0).toUpperCase() || "?"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span
-                        className={cn(
-                          "absolute bottom-0 right-0 block h-3 w-3 rounded-full border-2 border-white dark:border-gray-900",
-                          user.socketId ? "bg-green-500" : "bg-gray-400"
-                        )}
-                      />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{user.name || "Unknown"}</p>
-                  </TooltipContent>
-                </Tooltip>
-              ))}
-
-              {remainingCount > 0 && (
-                <div className="h-8 w-8 flex items-center justify-center rounded-full bg-gray-300 dark:bg-gray-700 text-xs text-gray-800 dark:text-gray-200 border-2 border-white dark:border-gray-900">
-                  +{remainingCount}
-                </div>
-              )}
-            </div>
-          </div>
-        </TooltipProvider>
       </div>
     </header>
   );

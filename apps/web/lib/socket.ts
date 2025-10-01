@@ -12,7 +12,13 @@ let socket: Socket | null = null;
 
 export const getSocket = (): Socket => {
   if (!socket) {
-    socket = io(URL, { transports: ["websocket"], autoConnect: false });
+    socket = io(URL, {
+      transports: ["websocket"],
+      autoConnect: false,
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+    });
     socket.connect();
   }
   return socket;
