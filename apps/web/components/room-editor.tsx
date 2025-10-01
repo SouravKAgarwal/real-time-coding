@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { Editor } from "@monaco-editor/react";
 import type { FileNode, FileTab } from "@repo/types";
 import {
   getSocket,
@@ -14,6 +13,7 @@ import {
 import { FileExplorer } from "./file-explorer";
 import { EditorTabs } from "./editor-tabs";
 import { toast } from "sonner";
+import { CodeEditor } from "./code-block";
 
 interface EditorPageProps {
   roomId: string;
@@ -117,7 +117,6 @@ export default function EditorPage({
     [activeFileId, roomId]
   );
 
-  // Close tab
   const handleCloseFile = useCallback((id: string) => {
     setOpenFiles((prev) => prev.filter((f) => f.id !== id));
     setActiveFileId((prev) => (prev === id ? null : prev));
@@ -157,38 +156,9 @@ export default function EditorPage({
         />
 
         {activeFile ? (
-          <Editor
-            height="100%"
-            language={activeFile.language}
-            theme="vs-dark"
-            path={activeFile.name}
-            loading={<div className="p-4">Loading editor...</div>}
-            value={activeFile.code}
+          <CodeEditor
+            activeFile={activeFile}
             onChange={(value) => handleEditorChange(value ?? "")}
-            options={{
-              minimap: { enabled: true },
-              fontSize: 14,
-              wordWrap: "on",
-              automaticLayout: true,
-              scrollBeyondLastLine: false,
-              renderWhitespace: "selection",
-              tabSize: 2,
-              insertSpaces: true,
-              autoClosingBrackets: "always",
-              autoClosingQuotes: "always",
-              autoClosingOvertype: "always",
-              autoIndent: "full",
-              formatOnPaste: true,
-              formatOnType: true,
-              bracketPairColorization: {
-                enabled: true,
-                independentColorPoolPerBracketType: true,
-              },
-              guides: {
-                indentation: true,
-                highlightActiveIndentation: true,
-              },
-            }}
           />
         ) : (
           <div className="flex-1 flex items-center justify-center text-gray-500">

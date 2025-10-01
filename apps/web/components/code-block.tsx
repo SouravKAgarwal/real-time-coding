@@ -4,19 +4,20 @@ import { Editor } from "@monaco-editor/react";
 import { FileTab } from "@repo/types";
 
 interface CodeEditorProps {
-  file: FileTab;
-  onChange: (value: string) => void;
+  activeFile: FileTab;
+  onChange: (value: string | undefined) => void;
 }
 
-export function CodeEditor({ file, onChange }: CodeEditorProps) {
+export function CodeEditor({ activeFile, onChange }: CodeEditorProps) {
   return (
     <Editor
       height="100%"
-      language={file.language}
+      language={activeFile.language}
       theme="vs-dark"
-      path={file.name}
-      value={file.code}
-      onChange={(value) => onChange(value ?? "")}
+      path={activeFile.name}
+      loading={<div className="p-4">Loading editor...</div>}
+      value={activeFile.code}
+      onChange={onChange}
       options={{
         minimap: { enabled: true },
         fontSize: 14,
