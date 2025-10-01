@@ -6,15 +6,17 @@ import type {
   LeaveRoomEvent,
 } from "@repo/types";
 
-const URL = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:4000";
+const URL =
+  process.env.NEXT_PUBLIC_SERVER_URL ||
+  "https://real-time-coding-server.vercel.app";
 
-let socket: Socket | null = null;
+let socket: Socket = null as unknown as Socket;
 
 export const getSocket = (): Socket => {
-  if (!socket) {
+  if (!socket && typeof window !== "undefined") {
     socket = io(URL, {
       transports: ["websocket"],
-      autoConnect: false,
+      autoConnect: true,
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,

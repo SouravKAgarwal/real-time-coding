@@ -2,19 +2,21 @@
   "$schema": "https://turborepo.com/schema.json",
   "ui": "tui",
   "tasks": {
-    "build": {
+    "server#build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", "tsconfig.json", "tsconfig.*.json"],
-      "outputs": ["dist/**", "build/**", "lib/**", "!.turbo/**"]
+      "outputs": ["dist/**"],
+      "env": ["PORT","MONGODB_URI"]
     },
     "@repo/web#build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": ["dist/**", "!.turbo/**"]
+      "outputs": ["dist/**"]
     },
     "web#build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "env": ["NEXT_PUBLIC_SOCKET_URL"],
       "outputs": [".next/**", "!.next/cache/**"]
     },
     "lint": {
@@ -28,4 +30,6 @@
       "cache": true
     }
   }
+
+  
 }
