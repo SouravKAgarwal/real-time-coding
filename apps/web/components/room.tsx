@@ -8,7 +8,12 @@ import { getParticipants, getSocket } from "@/lib/socket";
 
 const generate6CharId = () => uuid().replace(/-/g, "").slice(0, 6);
 
-const Room = () => {
+interface RoomProps {
+  title?: string;
+  subTitle?: string;
+}
+
+const Room = ({ title, subTitle }: RoomProps) => {
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [roomId, setRoomId] = useState("");
@@ -55,11 +60,12 @@ const Room = () => {
 
   return (
     <div className="w-full max-w-xl mx-auto bg-neutral-900/60 border border-gray-800 rounded-2xl shadow-lg p-6 backdrop-blur">
-      <h2 className="text-3xl font-bold text-center text-white mb-8">
-        Join/Create room to continue
-      </h2>
+      <div className="text-center relative">
+        <h1 className="text-4xl font-bold text-white">{title}</h1>
+        <p className="mt-2 text-gray-400">{subTitle}</p>
+      </div>
 
-      <div className="mb-4">
+      <div className="mb-4 mt-8">
         <label className="flex text-sm font-medium text-gray-300 mb-2">
           Your Name
         </label>

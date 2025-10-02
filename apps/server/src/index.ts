@@ -13,6 +13,10 @@ const app = express();
 app.use(cors({ origin: "*" }));
 const server = http.createServer(app);
 
+app.get("/", (req, res) => {
+  res.send("Server is working");
+});
+
 const io = new Server(server, { cors: { origin: "*" } });
 
 const rooms: Record<

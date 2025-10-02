@@ -18,11 +18,18 @@ export const metadata: Metadata = {
     "Join CodeCollab to code together in real-time. Create or join coding rooms and collaborate seamlessly with your team.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const s = await fetch(
+    process.env.NEXT_PUBLIC_SERVER_URL ||
+      "https://real-time-coding-f4vt.onrender.com/"
+  );
+
+  console.log(s);
+
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
