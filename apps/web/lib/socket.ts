@@ -7,7 +7,7 @@ import type {
 } from "@repo/types";
 
 const URL =
-  process.env.NEXT_PUBLIC_SERVER_URL ||
+  process.env.NEXT_PUBLIC_SOCKET_URL ||
   "https://real-time-coding-f4vt.onrender.com";
 
 let socket: Socket = null as unknown as Socket;
