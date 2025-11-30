@@ -2,23 +2,15 @@
 
 import { useState, useCallback, useEffect } from "react";
 import type { FileNode, FileTab } from "@repo/types";
-import {
-  getSocket,
-  joinRoom,
-  leaveRoom,
-  emitCodeChange,
-  onUserJoined,
-  onUserLeft,
-} from "@/lib/socket";
-import { FileExplorer } from "./file-explorer";
+import { useSocket } from "@/components/providers/socket-provider";
+import { Sidebar } from "@/components/room/sidebar";
 import { EditorTabs } from "./editor-tabs";
 import { toast } from "sonner";
 import { CodeEditor } from "./code-block";
+import { v4 as uuidv4 } from "uuid";
 
 interface EditorPageProps {
   roomId: string;
-  userId: string;
-  username: string;
 }
 
 const languageMap: Record<string, string> = {
@@ -45,27 +37,69 @@ const languageMap: Record<string, string> = {
   json: "json",
 };
 
-export default function EditorPage({
-  roomId,
-  userId,
-  username,
-}: EditorPageProps) {
+export default function RoomEditor({ roomId }: EditorPageProps) {
   const [openFiles, setOpenFiles] = useState<FileTab[]>([]);
   const [activeFileId, setActiveFileId] = useState<string | null>(null);
+  const [username, setUsername] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [showNameDialog, setShowNameDialog] = useState(false);
+  const [nameInput, setNameInput] = useState("");
 
-  const socket = getSocket();
+  const { socket } = useSocket();
 
   useEffect(() => {
-    if (!roomId || !userId) return;
+    const storedUsername = localStorage.getItem("username");
+    let storedUserId = localStorage.getItem("userId");
 
-    joinRoom({ roomId, userId, name: username });
+    if (!storedUserId) {
+      storedUserId = uuidv4();
+      localStorage.setItem("userId", storedUserId);
+    }
+
+    setUserId(storedUserId);
+
+    if (storedUsername) {
+      setUsername(storedUsername);
+    } else {
+      setShowNameDialog(true);
+    }
+  }, []);
+
+  const handleNameSubmit = () => {
+    if (!nameInput.trim()) return;
+    localStorage.setItem("username", nameInput.trim());
+    setUsername(nameInput.trim());
+    setShowNameDialog(false);
+  };
+
+  useEffect(() => {
+    if (!roomId || !userId || !username || !socket) return;
+
+    socket.emit("join-room", { roomId, userId, name: username });
+
+    const handleUserJoined = (data: { userId: string; name: string }) => {
+      if (data.userId === userId) toast.success("You joined the room");
+      else toast.success(`${data.name} joined the room`);
+    };
+
+    const handleUserLeft = (data: { userId: string; name: string }) => {
+      if (data.userId === userId) toast("You left the room");
+      else toast(`${data.name} left the room`);
+    };
+
+    socket.on("user-joined", handleUserJoined);
+    socket.on("user-left", handleUserLeft);
 
     return () => {
-      leaveRoom({ roomId, userId });
+      socket.emit("leave-room", { roomId, userId });
+      socket.off("user-joined", handleUserJoined);
+      socket.off("user-left", handleUserLeft);
     };
-  }, [roomId, userId, username]);
+  }, [roomId, userId, username, socket]);
 
   useEffect(() => {
+    if (!socket) return;
+
     const handleCodeChange = (payload: { fileId: string; code: string }) => {
       setOpenFiles((prev) =>
         prev.map((f) =>
@@ -92,7 +126,7 @@ export default function EditorPage({
       const tab: FileTab = {
         id: file.id,
         name: file.name,
-        code: (file as any).code ?? "",
+        code: file.code ?? "",
         language,
         dirty: false,
       };
@@ -105,7 +139,7 @@ export default function EditorPage({
 
   const handleEditorChange = useCallback(
     (code: string) => {
-      if (!activeFileId) return;
+      if (!activeFileId || !socket) return;
 
       setOpenFiles((prev) =>
         prev.map((f) =>
@@ -113,9 +147,9 @@ export default function EditorPage({
         )
       );
 
-      emitCodeChange({ roomId, fileId: activeFileId, code });
+      socket.emit("code-change", { roomId, fileId: activeFileId, code });
     },
-    [activeFileId, roomId]
+    [activeFileId, roomId, socket]
   );
 
   const handleCloseFile = useCallback((id: string) => {
@@ -123,32 +157,47 @@ export default function EditorPage({
     setActiveFileId((prev) => (prev === id ? null : prev));
   }, []);
 
-  useEffect(() => {
-    if (!roomId) return;
-
-    const unsubJoined = onUserJoined(roomId, (user) => {
-      if (user.userId === userId) toast.success("You joined the room");
-      else toast.success(`${user.name} joined the room`);
-    });
-
-    const unsubLeft = onUserLeft(roomId, (user) => {
-      if (user.userId === userId) toast("You left the room");
-      else toast(`${user.name} left the room`);
-    });
-
-    return () => {
-      unsubJoined();
-      unsubLeft();
-    };
-  }, [roomId, userId]);
-
   const activeFile = openFiles.find((f) => f.id === activeFileId);
 
-  return (
-    <div className="flex h-screen bg-[#1e1e1e] text-white">
-      <FileExplorer roomId={roomId} onSelectFile={handleFileSelect} />
+  if (showNameDialog) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-[#1e1e1e] text-white">
+        <div className="bg-[#252526] p-8 rounded-lg shadow-xl w-full max-w-md border border-[#333]">
+          <h2 className="text-2xl font-bold mb-6 text-center">
+            Enter your name
+          </h2>
+          <input
+            type="text"
+            value={nameInput}
+            onChange={(e) => setNameInput(e.target.value)}
+            placeholder="Your display name"
+            className="w-full bg-[#1e1e1e] border border-[#333] rounded px-4 py-3 text-white mb-4 focus:outline-none focus:border-blue-500"
+            onKeyDown={(e) => e.key === "Enter" && handleNameSubmit()}
+          />
+          <button
+            onClick={handleNameSubmit}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded transition-colors"
+          >
+            Join Room
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-      <div className="flex-1 flex flex-col">
+  if (!username || !userId) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-[#1e1e1e] text-white">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex h-screen bg-[#1e1e1e] text-white overflow-hidden">
+      <Sidebar roomId={roomId} onSelectFile={handleFileSelect} />
+
+      <div className="flex-1 flex flex-col min-w-0">
         <EditorTabs
           files={openFiles}
           activeFileId={activeFileId}
@@ -162,8 +211,15 @@ export default function EditorPage({
             onChange={(value) => handleEditorChange(value ?? "")}
           />
         ) : (
-          <div className="flex-1 flex items-center justify-center text-gray-500">
-            <span>Select a file to start editing</span>
+          <div className="flex-1 flex items-center justify-center text-gray-500 bg-[#1e1e1e]">
+            <div className="text-center">
+              <p className="text-xl font-semibold mb-2">
+                Welcome to CodeCollab
+              </p>
+              <p className="text-sm">
+                Select a file from the sidebar to start coding
+              </p>
+            </div>
           </div>
         )}
       </div>

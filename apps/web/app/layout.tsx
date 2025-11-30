@@ -2,6 +2,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { type Metadata } from "next";
 import { Toaster } from "sonner";
+import { SocketProvider } from "@/components/providers/socket-provider";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -23,18 +24,39 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const s = await fetch(
+  const serverUrl =
     process.env.NEXT_PUBLIC_SERVER_URL ||
-      "https://real-time-coding-f4vt.onrender.com/"
-  );
+    "https://real-time-coding-f4vt.onrender.com/";
 
-  console.log(s);
+  let isServerUp = false;
+
+  try {
+    const res = await fetch(serverUrl, { cache: "no-store" });
+    isServerUp = res.ok;
+  } catch (err) {
+    console.error("Server is unreachable:", err);
+  }
 
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        {children}
-        <Toaster position="bottom-right" richColors />
+        {isServerUp ? (
+          <SocketProvider>
+            {children}
+            <Toaster position="bottom-right" richColors />
+          </SocketProvider>
+        ) : (
+          <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-200">
+                Server unavailable
+              </h1>
+              <p className="mt-2 text-gray-600 dark:text-gray-400">
+                Please try again later.
+              </p>
+            </div>
+          </div>
+        )}
       </body>
     </html>
   );

@@ -42,7 +42,7 @@ export const createFile = (
   roomId: string,
   fileId: string,
   name: string,
-  type: "file" | "folder" = "file",
+  type: "file" | "folder",
   parentId: string | null = null
 ) => {
   getSocket().emit("file-create", { roomId, fileId, name, type, parentId });

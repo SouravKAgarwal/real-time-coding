@@ -1,9 +1,3 @@
-export interface CodeChangeEvent {
-  code: string;
-  fileId: string;
-  roomId: string;
-}
-
 export interface JoinRoomEvent {
   roomId: string;
   userId: string;
@@ -29,4 +23,18 @@ export interface FileTab {
   code: string;
   language: string;
   dirty: boolean;
+}
+
+export interface Participant {
+  userId: string;
+  name?: string;
+  socketId: string;
+}
+
+export interface CodeChangeEvent {
+  roomId: string;
+  fileId: string;
+  code: string;
+  userId?: string;
+  timestamp?: string;
 }

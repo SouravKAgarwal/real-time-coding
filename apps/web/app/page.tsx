@@ -1,76 +1,144 @@
-import Room from "@/components/room";
-import { BackgroundBeams } from "@/components/ui/background-beams";
-import { Users, Code2, Share2 } from "lucide-react";
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { motion } from "motion/react";
+import { ArrowRight, Code2, Users } from "lucide-react";
+import { v4 as uuidv4 } from "uuid";
+import { toast } from "sonner";
 
 export default function Home() {
+  const router = useRouter();
+  const [username, setUsername] = useState("");
+  const [roomId, setRoomId] = useState("");
+  const [activeTab, setActiveTab] = useState<"create" | "join">("create");
+
+  const handleCreateRoom = () => {
+    if (!username.trim()) {
+      toast.error("Please enter a username");
+      return;
+    }
+    const newRoomId = uuidv4();
+    localStorage.setItem("username", username);
+    router.push(`/room/${newRoomId}`);
+  };
+
+  const handleJoinRoom = () => {
+    if (!username.trim() || !roomId.trim()) {
+      toast.error("Please enter both username and room ID");
+      return;
+    }
+    localStorage.setItem("username", username);
+    router.push(`/room/${roomId}`);
+  };
+
   return (
-    <div className="relative min-h-screen w-full bg-neutral-950 flex flex-col items-center justify-center text-white overflow-hidden">
-      <BackgroundBeams />
+    <div className="min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center p-4 relative overflow-hidden">
+      {/* Background Gradients */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-purple-600/20 rounded-full blur-[100px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/20 rounded-full blur-[100px]" />
+      </div>
 
-      <section className="relative z-10 text-center max-w-4xl px-6 py-10">
-        <h1 className="text-5xl md:text-6xl font-extrabold leading-tight bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-          CodeCollab
-        </h1>
-        <p className="mt-2 text-lg md:text-xl text-gray-300">
-          Work together on code with your team, in real-time. Share ideas, debug
-          faster, and build better — all inside one collaborative editor.
-        </p>
-
-        <div className="mt-10">
-          <Room />
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="z-10 text-center mb-12"
+      >
+        <div className="flex items-center justify-center gap-3 mb-4">
+          <Code2 className="w-12 h-12 text-blue-500" />
+          <h1 className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
+            CodeCollab
+          </h1>
         </div>
-      </section>
-
-      <section className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-8 px-6 py-20 max-w-6xl">
-        <FeatureCard
-          icon={<Users className="h-8 w-8 text-blue-400" />}
-          title="Collaborative Editing"
-          description="See changes live as your teammates type. Stay in sync without conflicts."
-        />
-        <FeatureCard
-          icon={<Code2 className="h-8 w-8 text-purple-400" />}
-          title="Powerful Code Editor"
-          description="Syntax highlighting, autocompletion, and formatting — powered by Monaco Editor."
-        />
-        <FeatureCard
-          icon={<Share2 className="h-8 w-8 text-pink-400" />}
-          title="Instant Sharing"
-          description="Create a room and share the link. No sign-up needed — just start coding."
-        />
-      </section>
-
-      <section className="relative z-10 text-center px-6 py-20 max-w-4xl">
-        <h2 className="text-3xl md:text-4xl font-bold text-white">
-          Ready to start collaborating?
-        </h2>
-        <p className="mt-4 text-lg text-gray-300">
-          Join a room now and experience seamless, real-time coding with your
-          team.
+        <p className="text-gray-400 text-lg max-w-md mx-auto">
+          Real-time collaborative coding environment for teams and friends.
         </p>
-      </section>
+      </motion.div>
 
-      <footer className="relative z-10 text-center py-6 text-sm text-gray-500 border-t border-gray-800 w-full">
-        © {new Date().getFullYear()} CodeCollab. Built for real-time
-        collaboration.
-      </footer>
-    </div>
-  );
-}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+        className="z-10 w-full max-w-md bg-gray-900/50 backdrop-blur-xl border border-gray-800 rounded-2xl p-8 shadow-2xl"
+      >
+        <div className="flex gap-4 mb-8 p-1 bg-gray-800/50 rounded-xl">
+          <button
+            onClick={() => setActiveTab("create")}
+            className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
+              activeTab === "create"
+                ? "bg-blue-600 text-white shadow-lg"
+                : "text-gray-400 hover:text-white"
+            }`}
+          >
+            Create Room
+          </button>
+          <button
+            onClick={() => setActiveTab("join")}
+            className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
+              activeTab === "join"
+                ? "bg-purple-600 text-white shadow-lg"
+                : "text-gray-400 hover:text-white"
+            }`}
+          >
+            Join Room
+          </button>
+        </div>
 
-function FeatureCard({
-  icon,
-  title,
-  description,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="bg-neutral-900/50 border border-gray-800 rounded-xl p-6 text-center hover:border-blue-500 transition">
-      <div className="flex justify-center mb-4">{icon}</div>
-      <h3 className="text-xl font-semibold text-white">{title}</h3>
-      <p className="mt-2 text-gray-400">{description}</p>
+        <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-2">
+              Username
+            </label>
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Enter your display name"
+              className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+            />
+          </div>
+
+          {activeTab === "join" && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+            >
+              <label className="block text-sm font-medium text-gray-400 mb-2">
+                Room ID
+              </label>
+              <input
+                type="text"
+                value={roomId}
+                onChange={(e) => setRoomId(e.target.value)}
+                placeholder="Enter room ID"
+                className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+              />
+            </motion.div>
+          )}
+
+          <button
+            onClick={activeTab === "create" ? handleCreateRoom : handleJoinRoom}
+            className={`w-full py-3 px-4 rounded-xl font-bold text-white shadow-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98] ${
+              activeTab === "create"
+                ? "bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 shadow-blue-500/25"
+                : "bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 shadow-purple-500/25"
+            }`}
+          >
+            {activeTab === "create" ? (
+              <>
+                Create New Room <ArrowRight className="w-4 h-4" />
+              </>
+            ) : (
+              <>
+                Join Existing Room <Users className="w-4 h-4" />
+              </>
+            )}
+          </button>
+        </div>
+      </motion.div>
     </div>
   );
 }

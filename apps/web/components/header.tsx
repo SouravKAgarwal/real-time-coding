@@ -9,7 +9,7 @@ import {
   TooltipTrigger,
 } from "./ui/tooltip";
 import { useEffect, useState } from "react";
-import { getParticipants, getSocket, leaveRoom } from "@/lib/socket";
+import { useSocket } from "@/components/providers/socket-provider";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
 import { useRouter } from "next/navigation";
@@ -23,21 +23,30 @@ interface Participant {
 
 export const Header = ({ roomId }: { roomId: string }) => {
   const [participants, setParticipants] = useState<Participant[]>([]);
-  const socket = getSocket();
+  const { socket } = useSocket();
   const router = useRouter();
 
   useEffect(() => {
-    if (!roomId) return;
+    if (!roomId || !socket) return;
 
-    const unsubscribe = getParticipants(roomId, (users) => {
-      setParticipants(users);
-    });
+    const handleParticipantsUpdate = (data: {
+      roomId: string;
+      users: Participant[];
+    }) => {
+      if (data.roomId === roomId) {
+        setParticipants(data.users);
+      }
+    };
 
     socket.emit("get-participants", { roomId });
-    return () => unsubscribe();
+    socket.on("participants-update", handleParticipantsUpdate);
+
+    return () => {
+      socket.off("participants-update", handleParticipantsUpdate);
+    };
   }, [roomId, socket]);
 
-  const currentUser = participants.find((p) => p.socketId === socket.id);
+  const currentUser = participants.find((p) => p.socketId === socket?.id);
   const currentUserId = currentUser?.userId;
 
   const others = participants.filter((p) => p.userId !== currentUserId);
@@ -51,8 +60,8 @@ export const Header = ({ roomId }: { roomId: string }) => {
   const remainingCount = sortedParticipants.length - maxVisible;
 
   const handleRoomLeave = () => {
-    if (!currentUserId) return;
-    leaveRoom({ roomId, userId: currentUserId });
+    if (!currentUserId || !socket) return;
+    socket.emit("leave-room", { roomId, userId: currentUserId });
     router.push("/");
   };
 

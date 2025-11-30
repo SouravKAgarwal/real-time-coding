@@ -13,13 +13,7 @@ import {
   IconFilePlus,
   IconFolderPlus,
 } from "@tabler/icons-react";
-import {
-  createFile,
-  deleteFile,
-  renameFile,
-  moveFile,
-  onFilesUpdate,
-} from "@/lib/socket";
+import { useSocket } from "@/components/providers/socket-provider";
 
 interface FileExplorerProps {
   roomId: string;
@@ -27,6 +21,7 @@ interface FileExplorerProps {
 }
 
 export function FileExplorer({ roomId, onSelectFile }: FileExplorerProps) {
+  const { socket } = useSocket();
   const [files, setFiles] = useState<FileNode[]>([]);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -34,11 +29,19 @@ export function FileExplorer({ roomId, onSelectFile }: FileExplorerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const off = onFilesUpdate(roomId, (fileTree) => {
-      setFiles(fileTree);
-    });
-    return () => off();
-  }, [roomId]);
+    if (!socket) return;
+
+    const handleFilesUpdate = (data: { roomId: string; files: FileNode[] }) => {
+      if (data.roomId === roomId) {
+        setFiles(data.files);
+      }
+    };
+
+    socket.on("files-update", handleFilesUpdate);
+    return () => {
+      socket.off("files-update", handleFilesUpdate);
+    };
+  }, [socket, roomId]);
 
   const toggleExpand = (id: string) => {
     setExpanded((prev) => {
@@ -49,20 +52,21 @@ export function FileExplorer({ roomId, onSelectFile }: FileExplorerProps) {
   };
 
   const handleRename = (id: string, name: string) => {
-    if (!name.trim()) {
-      return;
-    }
-    renameFile(roomId, id, name.trim());
+    if (!name.trim() || !socket) return;
+    socket.emit("file-rename", { roomId, fileId: id, name: name.trim() });
   };
 
   const handleDelete = (id: string) => {
-    deleteFile(roomId, id);
+    if (!socket) return;
+    socket.emit("file-delete", { roomId, fileId: id });
   };
 
   const handleAdd = (parentId: string | null, type: "file" | "folder") => {
+    if (!socket) return;
     const id = crypto.randomUUID().slice(0, 6);
-    const name = ""; 
-    createFile(roomId, id, name, type, parentId);
+    const name = "untitled.txt";
+
+    socket.emit("file-create", { roomId, fileId: id, name, type, parentId });
 
     if (parentId) {
       setExpanded((prev) => {
@@ -86,8 +90,13 @@ export function FileExplorer({ roomId, onSelectFile }: FileExplorerProps) {
   const onDrop = (e: React.DragEvent, targetId: string) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!draggingId || draggingId === targetId) return;
-    moveFile(roomId, draggingId, targetId);
+    if (!draggingId || draggingId === targetId || !socket) return;
+
+    socket.emit("file-move", {
+      roomId,
+      fileId: draggingId,
+      targetFolderId: targetId,
+    });
     setDraggingId(null);
   };
 
@@ -215,8 +224,8 @@ export function FileExplorer({ roomId, onSelectFile }: FileExplorerProps) {
   };
 
   return (
-    <div className="w-64 bg-[#1e1e1e] text-gray-200 flex flex-col select-none border-r border-[#434346]">
-      <div className="flex justify-between items-center px-2 py-2 border-b border-[#434346]">
+    <div className="flex flex-col h-full">
+      <div className="flex justify-between items-center px-4 py-2 border-b border-gray-800">
         <span className="font-semibold text-xs uppercase tracking-wide text-gray-400">
           Explorer
         </span>
@@ -238,7 +247,7 @@ export function FileExplorer({ roomId, onSelectFile }: FileExplorerProps) {
         </div>
       </div>
 
-      <div className="overflow-y-auto flex-1 px-2 py-1">
+      <div className="overflow-y-auto flex-1 px-2 py-2">
         {files.map((f) => renderNode(f))}
       </div>
     </div>
